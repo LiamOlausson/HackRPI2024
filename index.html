@@ -1,0 +1,139 @@
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Chess</title>
+  <base href="../" />
+  <link rel="stylesheet" href="node_modules/@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.css" integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous">
+</head>
+<body>
+<div id="myBoard" style="width: 40%"></div>
+<div id="hiddenBoard" style="width: 40%"></div>
+<label>Status:</label>
+<div id="status"></div>
+<label>FEN:</label>
+<div id="fen"></div>
+<label>PGN:</label>
+<div id="pgn"></div>
+
+<!-- Single input for source and target -->
+<label for="move-input">Enter move (source,target):</label>
+<input type="text" id="move-input" placeholder="e2e4" />
+
+<script src="node_modules/jquery/dist/jquery.min.js"></script>
+<script src="node_modules/@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
+<script src="speechRecording.js"></script>
+<script>
+
+var hiddenBoard = null
+var board = null
+var game = new Chess()
+var $status = $('#status')
+var $fen = $('#fen')
+var $pgn = $('#pgn')
+
+// Function to handle piece selection
+function onSelectPiece (source, piece, position, orientation) {
+  if (game.game_over()) return false
+
+  // Only allow picking up pieces for the side to move
+  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+      (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+    return false
+  }
+}
+
+// Function to handle piece movement
+function onPieceMove (source, target) {
+  // Try to make the move
+  var move = game.move({
+    from: source,
+    to: target,
+    promotion: 'q' // Always promote to queen for simplicity
+  })
+
+  // If the move is illegal, return the piece to its original position
+  if (move === null) return 'snapback'
+
+  updateStatus()
+}
+
+// Function to update board and status
+function afterMovePos () {
+  board.position(game.fen())
+}
+
+// Update the status (checkmate, check, draw, etc.)
+function updateStatus () {
+  var status = ''
+  var moveColor = game.turn() === 'b' ? 'Black' : 'White'
+
+  // Checkmate?
+  if (game.in_checkmate()) {
+    status = 'Game over, ' + moveColor + ' is in checkmate.'
+  }
+  // Draw?
+  else if (game.in_draw()) {
+    status = 'Game over, drawn position'
+  }
+  // Game still on
+  else {
+    status = moveColor + ' to move'
+
+    // Is the king in check?
+    if (game.in_check()) {
+      status += ', ' + moveColor + ' is in check'
+    }
+  }
+
+  $status.html(status)
+  $fen.html(game.fen())
+  $pgn.html(game.pgn())
+}
+
+// Handle move input on "Enter" key press
+$('#move-input').on('keypress', function(event) {
+  if (event.key === 'Enter') {
+    var moveInput = $('#move-input').val().trim()
+
+    // Check if the move input is valid (source and target squares)
+    if (moveInput.length === 4) {
+      var sourceSquare = moveInput.slice(0, 2)
+      var targetSquare = moveInput.slice(2, 4)
+
+      var move = game.move({
+        from: sourceSquare,
+        to: targetSquare,
+        promotion: 'q' // Always promote to queen
+      })
+
+      if (move === null) {
+        alert('Illegal move!')
+      } else {
+        updateStatus()
+        board.position(game.fen()) // Update the board after the move
+      }
+    } else {
+      alert('Invalid move format. Please use the format "e2e4".')
+    }
+
+    // Clear the input field
+    $('#move-input').val('')
+  }
+})
+
+var config = {
+  draggable: true,
+  position: 'start',
+  onDragStart: onSelectPiece,
+  onDrop: onPieceMove,
+  onSnapEnd: afterMovePos
+}
+
+board = Chessboard('myBoard', config)
+hiddenBoard = Chessboard(hiddenBoard)
+updateStatus()
+
+</script>
+</body>
+</html>

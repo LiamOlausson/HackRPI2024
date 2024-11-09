@@ -1,0 +1,17 @@
+{
+  "name": "hackrpi2024",
+  "version": "1.0.0",
+  "description": "This repository is meant to help people who are visually impaired play chess with more freedom as well as a local web application to help create a more fair competition by allowing for the option for users to hide the pieces from view for both players.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@chrisoakman/chessboardjs": "^1.0.0",
+    "chess.js": "^1.0.0-beta.8",
+    "jquery": "^3.7.1"
+  }
+}
