@@ -3,7 +3,7 @@ This repository is meant to help people who are visually impaired play chess wit
 
 
 ## Local Web Application
-Allows for friends to play locally with the added benefit of being able to use voice controlled pieces as well as equalization factors such as methods to hide pieces from both players.
+Allows for friends to play locally with the added benefit of being able to use keyboard controlled pieces as well as equalization factors such as methods to hide pieces from both players.
 
 
 ## Use for Chess.com
