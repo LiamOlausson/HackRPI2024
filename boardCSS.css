@@ -1,0 +1,21 @@
+/* Make the hidden board absolutely positioned to overlay the original board */
+#hiddenBoard {
+  position: absolute;
+  top: 8;
+  left: 8;
+  z-index: 10; /* Hide it above the main board */
+  visibility: hidden; /* Start with it hidden */
+}
+
+/* Ensure that the main board container has relative positioning */
+#myBoard {
+  position: relative;
+}
+
+#instructions {
+  display: inline-block;
+  padding-top: 0%;
+  align-content: left;
+  width: 300px;
+  padding-left: 620;
+}

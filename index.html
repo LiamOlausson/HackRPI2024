@@ -4,29 +4,7 @@
   <title>Chess</title>
   <base href="../" />
   <link rel="stylesheet" href="node_modules/@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.css">
-  <style>
-    /* Make the hidden board absolutely positioned to overlay the original board */
-    #hiddenBoard {
-      position: absolute;
-      top: 8;
-      left: 8;
-      z-index: 10; /* Hide it above the main board */
-      visibility: hidden; /* Start with it hidden */
-    }
-
-    /* Ensure that the main board container has relative positioning */
-    #myBoard {
-      position: relative;
-    }
-
-    #instructions {
-      display: inline-block;
-      padding-top: 0%;
-      align-content: left;
-      width: 300px;
-      padding-left: 620;
-    }
-  </style>
+  <link rel="stylesheet" href="boardCSS.css">
 </head>
 <body>
 <div id="myBoard" style="width: 500"></div>
@@ -41,7 +19,8 @@
 <button id="readSquareButton">Read Square</button>
 <button id="cancelReadingButton">Cancel Reading</button>
 <button id="readMovesButton">Read Moves</button> 
-<button id="readCodesButton">Read Codes</button> 
+<button id="readCodesButton">Read Codes</button>
+<button id="toggleMoveReadingButton">Toggle Move Reading</button>
 <br>
 <label>Status:</label>
 <div id="status"></div>
@@ -64,6 +43,7 @@ var game = new Chess()
 var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
+var moveReadingEnabled = true;
 
 // Function to handle piece selection
 function onSelectPiece (source, piece, position, orientation) {
@@ -122,7 +102,17 @@ function updateStatus () {
   $status.html(status)
   $fen.html(game.fen())
   $pgn.html(game.pgn())
+
+  if (moveReadingEnabled && game.history().length > 0) {
+        var lastMove = game.history({ verbose: true }).slice(-1)[0];
+        speak(`Move: ${lastMove.color === 'w' ? 'White' : 'Black'} from ${lastMove.from} to ${lastMove.to}`);
+    }
 }
+
+$('#toggleMoveReadingButton').on('click', function() {
+    moveReadingEnabled = !moveReadingEnabled;
+    $(this).text(moveReadingEnabled ? 'Disable Move Reading' : 'Enable Move Reading');
+});
 
 // Handle move input on "Enter" key press
 $('#move-input').on('keypress', function(event) {
