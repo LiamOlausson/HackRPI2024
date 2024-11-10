@@ -3,15 +3,48 @@
   <meta charset="utf-8" />
   <title>Chess</title>
   <base href="../" />
-  <link rel="stylesheet" href="node_modules/@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.css" integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous">
+  <link rel="stylesheet" href="node_modules/@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.css">
+  <style>
+    /* Make the hidden board absolutely positioned to overlay the original board */
+    #hiddenBoard {
+      position: absolute;
+      top: 8;
+      left: 8;
+      z-index: 10; /* Hide it above the main board */
+      visibility: hidden; /* Start with it hidden */
+    }
+
+    /* Ensure that the main board container has relative positioning */
+    #myBoard {
+      position: relative;
+    }
+
+    #instructions {
+      display: inline-block;
+      padding-top: 0%;
+      align-content: left;
+      width: 300px;
+      padding-left: 620;
+    }
+  </style>
 </head>
 <body>
-<div id="myBoard" style="width: 40%"></div>
-<div id="hiddenBoard" style="width: 40%"></div>
+<div id="myBoard" style="width: 500"></div>
+<div id="hiddenBoard" style="width: 500"></div>
+
+
+<br>
+<!-- Buttons for Acessibility options -->
+<button id="hideButton">Hide</button> 
+<button id="resetButton">Reset</button>
+<button id="readBoardButton">Read Board</button>
+<button id="readSquareButton">Read Square</button>
+<button id="cancelReadingButton">Cancel Reading</button>
+<button id="readMovesButton">Read Moves</button> 
+<button id="readCodesButton">Read Codes</button> 
+<br>
 <label>Status:</label>
 <div id="status"></div>
-<label>FEN:</label>
-<div id="fen"></div>
 <label>PGN:</label>
 <div id="pgn"></div>
 
@@ -22,7 +55,7 @@
 <script src="node_modules/jquery/dist/jquery.min.js"></script>
 <script src="node_modules/@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
-<script src="speechRecording.js"></script>
+<script src="scriptToText.js"></script>
 <script>
 
 var hiddenBoard = null
@@ -94,10 +127,32 @@ function updateStatus () {
 // Handle move input on "Enter" key press
 $('#move-input').on('keypress', function(event) {
   if (event.key === 'Enter') {
-    var moveInput = $('#move-input').val().trim()
+    var moveInput = $('#move-input').val().trim().toLowerCase()
 
-    // Check if the move input is valid (source and target squares)
-    if (moveInput.length === 4) {
+    // Check if the input is a special command ("reset" or "hide")
+    if (moveInput === 'reset') {
+      // Trigger reset functionality
+      $('#resetButton').click()
+    } else if ((moveInput === 'hide') || (moveInput === 'show')) {
+      // Trigger hide functionality
+      $('#hideButton').click()
+    } else if (moveInput === 'read board') {
+      // Trigger hide functionality
+      $('#readBoardButton').click()
+    } else if (moveInput === 'read square') {
+      // Trigger hide functionality
+      $('#readSquareButton').click()
+    } else if (moveInput === 'read moves') {
+      // Trigger hide functionality
+      $('#readMovesButton').click()
+    } else if (moveInput === 'cancel') {
+      // Trigger hide functionality
+      $('#cancelReadingButton').click()
+    }else if (moveInput === 'help') {
+      // Trigger hide functionality
+      $('#readCodesButton').click()
+    } else if (moveInput.length === 4) {
+      // Regular move (source, target) input
       var sourceSquare = moveInput.slice(0, 2)
       var targetSquare = moveInput.slice(2, 4)
 
@@ -114,13 +169,129 @@ $('#move-input').on('keypress', function(event) {
         board.position(game.fen()) // Update the board after the move
       }
     } else {
-      alert('Invalid move format. Please use the format "e2e4".')
+      alert('Invalid move format. Please use the format "e2e4" or type "reset" or "hide".')
     }
 
     // Clear the input field
     $('#move-input').val('')
   }
 })
+
+// Toggle "Hide" button functionality
+$('#hideButton').on('click', function() {
+  var isHidden = $('#hiddenBoard').css('visibility') === 'hidden'
+  
+  if (isHidden) {
+    // Show the hidden board
+    $('#hiddenBoard').css('visibility', 'visible')
+    $(this).text('Show')
+  } else {
+    // Hide the hidden board
+    $('#hiddenBoard').css('visibility', 'hidden')
+    $(this).text('Hide')
+  }
+})
+
+// Reset button functionality
+$('#resetButton').on('click', function() {
+  game.reset() // Reset the chess game logic
+  board.position(game.fen()) // Reset the board to the starting position
+  updateStatus() // Update the status label
+
+  // Optionally hide the hidden board when resetting
+  $('#hiddenBoard').css('visibility', 'hidden')
+  $('#hideButton').text('Hide')
+})
+
+// Event listener for the "Read Board" button
+$('#readBoardButton').on('click', function() {
+  readBoard(); // Call the readBoard function when the button is clicked
+});
+
+// Event listener for the "Read Square" button
+$('#readSquareButton').on('click', function() {
+  readSquare(); // Call the readSquare function when the button is clicked
+});
+
+$('#readMovesButton').on('click', function() {
+  readMovesFromPGN(); // Read the moves from PGN
+})
+
+$('#readCodesButton').on('click', function() {
+  speak("Options are: 1. CODE, Hide, this will hide the board. 2. Code, Show, this will show the board after it was hidden. 3. CODE, Read Board, read out the positions of all pieces on the board. 4. CODE, read Square, enter in a square after the code and see what piece is at that square. 5. CODE, cancel, cancels the reading of anything. 6. CODE, read moves, reads out all moves made so far, 7. CODE, help, reads possible codes. Basic movement format source square to target square for example e2e4")
+})
+
+function speak(text) {
+    if ('speechSynthesis' in window) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+    } else {
+      alert('SpeechSynthesis API is not supported in this browser.');
+    }
+}
+
+    // Function to read the entire board position
+function readBoard() {
+  var boardState = board.position();
+  var boardText = "The board state is as follows: ";
+
+  for (var square in boardState) {
+    if (boardState.hasOwnProperty(square)) {
+      var piece = boardState[square];
+      var color = piece[0] === 'w' ? 'White' : 'Black'; // Extract color
+      var type = getPieceName(piece[1]); // Extract piece type (R, N, B, etc.)
+      boardText += color + " " + type + " at " + square + ". ";
+    }
+  }
+
+  speak(boardText);
+}
+
+// Helper function to get the piece name
+function getPieceName(piece) {
+  switch (piece) {
+    case 'K': return "King";
+    case 'Q': return "Queen";
+    case 'R': return "Rook";
+    case 'B': return "Bishop";
+    case 'N': return "Knight";
+    case 'P': return "Pawn";
+    default: return "";
+  }
+}
+
+// Function to read a specific square
+function readSquare() {
+  var squareInput = prompt("Enter a square to read (e.g., e2):");
+  var piece = board.position()[squareInput];
+  
+  if (piece) {
+    var color = piece[0] === 'w' ? 'White' : 'Black'; // Extract color
+    var type = getPieceName(piece[1]); // Extract piece type (R, N, B, etc.)
+    speak(`There is a ${color} ${type} at ${squareInput}.`);
+  } else {
+    speak(`There is no piece at ${squareInput}.`);
+  }
+}
+
+$('#cancelReadingButton').on('click', function() {
+  // Cancel any ongoing speech synthesis
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+});
+
+function readMovesFromPGN() {
+  var pgnText = game.pgn(); // Get the PGN from the game
+  var moves = pgnText.split(" "); // Split the moves by space
+  var movesText = "The moves in this game are: ";
+
+  moves.forEach(function(move, index) {
+    movesText +=  move + " "; // Format the move as move number and the move
+  });
+
+  speak(movesText); // Speak out the moves
+}
 
 var config = {
   draggable: true,
@@ -131,8 +302,10 @@ var config = {
 }
 
 board = Chessboard('myBoard', config)
-hiddenBoard = Chessboard(hiddenBoard)
 updateStatus()
+
+// Initialize the hidden board (empty, no pieces)
+hiddenBoard = Chessboard('hiddenBoard')
 
 </script>
 </body>
